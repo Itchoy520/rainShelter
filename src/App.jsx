@@ -1,54 +1,79 @@
-import React from "react";
+import React, { useState } from "react";
 
 function App() {
-  const connect = () => {
-    // Connection logic
+  const [status, setStatus] = useState("Idle"); // State for connection status
+  const [port, setPort] = useState(null); // State to store selected serial port
+
+  const connect = async () => {
+    try {
+      setStatus("Connecting...");
+      
+      // Request user to select a serial port
+      const selectedPort = await navigator.serial.requestPort();
+      await selectedPort.open({ baudRate: 9600 }); // Open port with a baud rate
+      setPort(selectedPort); // Save the port for future use
+      
+      // Wait for a few seconds to check connection
+      const reader = selectedPort.readable.getReader();
+      const decoder = new TextDecoder();
+
+      // Check if ESP32 sends a response (e.g., handshake message)
+      let isConnected = false;
+      const timer = setTimeout(() => {
+        reader.cancel(); // Stop reading after 10 seconds
+      }, 10000);
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break; // End of stream
+
+        const response = decoder.decode(value);
+        console.log(response); // Debug log from ESP32
+        if (response.includes("ESP32_OK")) {
+          isConnected = true; // Example handshake message from ESP32
+          break;
+        }
+      }
+
+      clearTimeout(timer);
+      reader.releaseLock();
+
+      setStatus(isConnected ? "Connected" : "Not Connected");
+    } catch (error) {
+      console.error(error);
+      setStatus("Not Connected");
+    }
   };
 
   return (
-    <div className="bg-black text-white min-h-screen">
+    <div className="bg-black text-white min-h-screen flex flex-col">
       {/* Navbar */}
-      <div className="navbar bg-gray-800 text-white">
-        <div className="flex-none">
-          <button className="btn btn-square btn-ghost text-white hover:bg-gray-700">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              className="inline-block h-5 w-5 stroke-current">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M4 6h16M4 12h16M4 18h16"></path>
-            </svg>
-          </button>
-        </div>
-        <div className="flex-1">
-          <a className="btn btn-ghost text-xl text-white hover:bg-gray-700">
-            RainShelter
-          </a>
-        </div>
-        <div className="flex-none">
-          <button className="btn btn-square btn-ghost text-white hover:bg-gray-700">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              className="inline-block h-5 w-5 stroke-current">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path>
-            </svg>
-          </button>
-        </div>
+      <div className="navbar bg-gray-800 text-white justify-center">
+        <a className="text-3xl font-bold text-white hover:bg-gray-700 p-2">
+          RainShelter
+        </a>
       </div>
 
       {/* Content */}
-      <div className="p-5">
-        <button className="btn btn-outline btn-success">Success</button>
+      <div className="flex flex-col justify-center items-center flex-grow">
+        <button onClick={connect} className="btn btn-outline btn-success mb-4">
+          Connect
+        </button>
+        <p className="text-lg mb-6">{status}</p> {/* Display connection status */}
+
+        <div className="divider divider-warning"></div>
+
+        {/* Card */}
+        <div className="card bg-neutral text-neutral-content w-96">
+          <div className="card-body items-center text-center">
+            <h2 className="card-title">Cookies!</h2>
+            <p>We are using cookies for no reason.</p>
+            <div className="card-actions justify-end">
+              <button className="btn btn-outline btn-primary">Primary</button>
+              <button className="btn btn-outline btn-accent">Accent</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
