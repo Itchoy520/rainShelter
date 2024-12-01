@@ -17,6 +17,20 @@ function App() {
     }
   }
 
+  const [ledState, setLedState] = useState("OFF");
+  const apiURL = "https://backendrainshelter.onrender.com";
+
+  const toggleLED = async () => {
+    try {
+      const response = await fetch(`${apiURL}/toggle`, {method: "POST"});
+      const data = await response.json();
+      const state = data.value === 1 ? "ON" : "OFF"; // Determin LED state
+      setLedState(state); // Update state
+    } catch (error) {
+      console.error("Error toggling LED:", error);
+    }
+  };
+
   const connect = async () => {
     try {
       setStatus("Connecting...");
@@ -82,9 +96,8 @@ function App() {
             <h2 className="card-title text-2xl mb-4">Cookies!</h2>
             <p className="mb-4 text-lg">We are using cookies for no reason.</p>
             <div className="card-actions justify-center gap-4">
-              <button className="btn btn-outline btn-primary px-6 py-3" onClick={toggleOnButton}>Turn ON</button>
-              <p>Value: {value !== null ? value : 'Loading...'}</p>
-              <button className="btn btn-outline btn-accent px-6 py-3">Turn OFF</button>
+              <button className="btn btn-outline btn-primary px-6 py-3" onClick={toggleLED}>Turn ON/OFF</button>
+              <p>Current LED State: <strong>{ledState}</strong></p>
             </div>
           </div>
         </div>
