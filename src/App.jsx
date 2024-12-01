@@ -4,6 +4,19 @@ function App() {
   const [status, setStatus] = useState("Idle"); // State for connection status
   const [port, setPort] = useState(null); // State to store selected serial port
 
+  // Button
+  const [value, setValue] = useState(null);
+
+  const toggleOnButton = async () => {
+    try {
+      const response = await fetch('https://backendrainshelter.onrender.com/getvalue');
+      const data = await response.json();
+      setValue(data.value); // Extract 'value' from the response
+    } catch (error) {
+      console.error('Error fetching the API:', error);
+    }
+  }
+
   const connect = async () => {
     try {
       setStatus("Connecting...");
@@ -69,7 +82,8 @@ function App() {
             <h2 className="card-title text-2xl mb-4">Cookies!</h2>
             <p className="mb-4 text-lg">We are using cookies for no reason.</p>
             <div className="card-actions justify-center gap-4">
-              <button className="btn btn-outline btn-primary px-6 py-3">Turn ON</button>
+              <button className="btn btn-outline btn-primary px-6 py-3" onClick={toggleOnButton}>Turn ON</button>
+              <p>Value: {value !== null ? value : 'Loading...'}</p>
               <button className="btn btn-outline btn-accent px-6 py-3">Turn OFF</button>
             </div>
           </div>
