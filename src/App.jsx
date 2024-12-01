@@ -2,73 +2,53 @@ import React, { useState } from "react";
 
 function App() {
   const [status, setStatus] = useState("Idle"); // State for connection status
-  const [port, setPort] = useState(null); // State to store selected serial port
+  const [ledState, setLedState] = useState("OFF"); // LED state (ON/OFF)
+  const [isOnDisabled, setIsOnDisabled] = useState(false); // Disable state for Turn ON button
+  const [isOffDisabled, setIsOffDisabled] = useState(true); // Disable state for Turn OFF button
 
-  // Button
-  const [value, setValue] = useState(null);
+  const apiURL = "https://backendrainshelter.onrender.com"; // Ensure you are using the correct backend URL
 
-  const toggleOnButton = async () => {
-    try {
-      const response = await fetch('https://backendrainshelter.onrender.com/getvalue');
-      const data = await response.json();
-      setValue(data.value); // Extract 'value' from the response
-    } catch (error) {
-      console.error('Error fetching the API:', error);
-    }
-  }
-
-  const [ledState, setLedState] = useState("OFF");
-  const apiURL = "https://backendrainshelter.onrender.com";
-
-  const toggleLED = async () => {
-    try {
-      const response = await fetch(`${apiURL}/toggle`, {method: "POST"});
-      const data = await response.json();
-      const state = data.value === 1 ? "ON" : "OFF"; // Determin LED state
-      setLedState(state); // Update state
-    } catch (error) {
-      console.error("Error toggling LED:", error);
-    }
-  };
-
+  // Connect function (dummy implementation, you should replace it with actual logic)
   const connect = async () => {
     try {
       setStatus("Connecting...");
-      
-      // Request user to select a serial port
-      const selectedPort = await navigator.serial.requestPort();
-      await selectedPort.open({ baudRate: 9600 }); // Open port with a baud rate
-      setPort(selectedPort); // Save the port for future use
-      
-      // Wait for a few seconds to check connection
-      const reader = selectedPort.readable.getReader();
-      const decoder = new TextDecoder();
-
-      // Check if ESP32 sends a response (e.g., handshake message)
-      let isConnected = false;
-      const timer = setTimeout(() => {
-        reader.cancel(); // Stop reading after 10 seconds
-      }, 10000);
-
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break; // End of stream
-
-        const response = decoder.decode(value);
-        console.log(response); // Debug log from ESP32
-        if (response.includes("ESP32_OK")) {
-          isConnected = true; // Example handshake message from ESP32
-          break;
-        }
-      }
-
-      clearTimeout(timer);
-      reader.releaseLock();
-
-      setStatus(isConnected ? "Connected" : "Not Connected");
+      // Example: Assuming you're connecting to a serial port or API
+      // Replace the following line with your actual connect logic
+      await fetch(`${apiURL}/connect`); // Replace with actual connection logic
+      setStatus("Connected");
     } catch (error) {
-      console.error(error);
-      setStatus("Not Connected");
+      setStatus("Failed to connect");
+      console.error("Connection error:", error);
+    }
+  };
+
+  // Function to toggle LED ON
+  const toggleLEDOn = async () => {
+    try {
+      const response = await fetch(`${apiURL}/onToggle`);
+      const data = await response.json();
+      if (data.value === 1) {
+        setLedState("ON");
+        setIsOnDisabled(true); // Disable Turn ON button
+        setIsOffDisabled(false); // Enable Turn OFF button
+      }
+    } catch (error) {
+      console.error("Error toggling LED ON:", error);
+    }
+  };
+
+  // Function to toggle LED OFF
+  const toggleLEDOff = async () => {
+    try {
+      const response = await fetch(`${apiURL}/offToggle`);
+      const data = await response.json();
+      if (data.value === 0) {
+        setLedState("OFF");
+        setIsOnDisabled(false); // Enable Turn ON button
+        setIsOffDisabled(true); // Disable Turn OFF button
+      }
+    } catch (error) {
+      console.error("Error toggling LED OFF:", error);
     }
   };
 
@@ -93,10 +73,22 @@ function App() {
         {/* Card */}
         <div className="card bg-neutral text-neutral-content w-96 p-4 shadow-xl">
           <div className="card-body items-center text-center">
-            <h2 className="card-title text-2xl mb-4">Cookies!</h2>
-            <p className="mb-4 text-lg">We are using cookies for no reason.</p>
+            <h2 className="card-title text-2xl mb-4">LED Control</h2>
             <div className="card-actions justify-center gap-4">
-              <button className="btn btn-outline btn-primary px-6 py-3" onClick={toggleLED}>Turn ON/OFF</button>
+              <button
+                className="btn btn-outline btn-primary px-6 py-3"
+                onClick={toggleLEDOn}
+                disabled={isOnDisabled} // Disable button based on state
+              >
+                Turn ON
+              </button>
+              <button
+                className="btn btn-outline btn-accent px-6 py-3"
+                onClick={toggleLEDOff}
+                disabled={isOffDisabled} // Disable button based on state
+              >
+                Turn OFF
+              </button>
               <p>Current LED State: <strong>{ledState}</strong></p>
             </div>
           </div>
