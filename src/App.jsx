@@ -1,56 +1,41 @@
 import React, { useState } from "react";
+import axios from "axios";
 
 function App() {
-  const [status, setStatus] = useState("Idle"); // State for connection status
-  const [ledState, setLedState] = useState("OFF"); // LED state (ON/OFF)
-  const [isOnDisabled, setIsOnDisabled] = useState(false); // Disable state for Turn ON button
-  const [isOffDisabled, setIsOffDisabled] = useState(true); // Disable state for Turn OFF button
+  const [data, setData] = useState("");
+  const [response, setResponse] = useState(null);
+  const [value, setValue] = useState("0"); 
+  const [isOn, setIsOn] = useState(false); 
 
   const apiURL = "https://backendrainshelter.onrender.com"; // Ensure you are using the correct backend URL
 
-  // Connect function (dummy implementation, you should replace it with actual logic)
-  const connect = async () => {
+
+
+  const handlePostRequest = async () => {
     try {
-      setStatus("Connecting...");
-      // Example: Assuming you're connecting to a serial port or API
-      // Replace the following line with your actual connect logic
-      await fetch(`${apiURL}/connect`); // Replace with actual connection logic
-      setStatus("Connected");
+      const postData = {
+        newValue: value,
+      };
+
+      const result = await axios.post("https://backendrainshelter.onrender.com/change-value", postData, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      setResponse(result.data);
+      if(value=="0"){
+        setValue("1");
+        setIsOn(true);
+      }else{
+        setValue("0");
+        setIsOn(false);
+      }
     } catch (error) {
-      setStatus("Failed to connect");
-      console.error("Connection error:", error);
+      console.error("Error making POST request:", error);
     }
   };
 
-  // Function to toggle LED ON
-  const toggleLEDOn = async () => {
-    try {
-      const response = await fetch(`${apiURL}/onToggle`);
-      const data = await response.json();
-      if (data.value === 1) {
-        setLedState("ON");
-        setIsOnDisabled(true); // Disable Turn ON button
-        setIsOffDisabled(false); // Enable Turn OFF button
-      }
-    } catch (error) {
-      console.error("Error toggling LED ON:", error);
-    }
-  };
-
-  // Function to toggle LED OFF
-  const toggleLEDOff = async () => {
-    try {
-      const response = await fetch(`${apiURL}/offToggle`);
-      const data = await response.json();
-      if (data.value === 0) {
-        setLedState("OFF");
-        setIsOnDisabled(false); // Enable Turn ON button
-        setIsOffDisabled(true); // Disable Turn OFF button
-      }
-    } catch (error) {
-      console.error("Error toggling LED OFF:", error);
-    }
-  };
 
   return (
     <div className="bg-gray-800 text-white min-h-screen flex flex-col">
@@ -60,40 +45,35 @@ function App() {
           RainShelter
         </a>
       </div>
-
-      {/* Content */}
-      <div className="flex flex-col justify-center items-center flex-grow bg-gray-800 p-6 space-y-6">
-        <button onClick={connect} className="btn btn-outline btn-success text-xl px-6 py-3 mb-6">
-          Connect
-        </button>
-        <p className="text-xl">{status}</p> {/* Display connection status */}
-
-        <div className="divider divider-warning my-8"></div>
-
-        {/* Card */}
+      <div className="flex justify-center pt-10 font-bold">Status: </div>
+      <div className="flex justify-center p-10">
+        
         <div className="card bg-neutral text-neutral-content w-96 p-4 shadow-xl">
           <div className="card-body items-center text-center">
-            <h2 className="card-title text-2xl mb-4">LED Control</h2>
-            <div className="card-actions justify-center gap-4">
-              <button
-                className="btn btn-outline btn-primary px-6 py-3"
-                onClick={toggleLEDOn}
-                disabled={isOnDisabled} // Disable button based on state
-              >
-                Turn ON
-              </button>
-              <button
-                className="btn btn-outline btn-accent px-6 py-3"
-                onClick={toggleLEDOff}
-                disabled={isOffDisabled} // Disable button based on state
-              >
-                Turn OFF
-              </button>
-              <p>Current LED State: <strong>{ledState}</strong></p>
+            <div className="flex">
+              <h2 className="card-title text-2xl mb-4 mr-5">Manual Control</h2>
+              <div className="card-actions justify-center gap-4">
+              <button onClick={handlePostRequest}
+              style={{
+                padding: "10px 20px",
+                fontSize: "16px",
+                backgroundColor: isOn ? "red" : "green",
+                color: "white",
+                border: "none",
+                borderRadius: "5px",
+                cursor: "pointer"
+              }}
+              >{isOn ? "OFF" : "ON"}</button>
+              </div>
             </div>
-          </div>
+            
+          
         </div>
-      </div>
+      </div></div>
+
+      
+        {/* Card */}
+      
 
       {/* Footer */}
       <footer className="footer footer-center bg-primary text-primary-content p-10 mt-10">
