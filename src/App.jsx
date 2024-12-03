@@ -45,7 +45,7 @@ function App() {
           RainShelter
         </a>
       </div>
-      <div className="flex justify-center pt-10 font-bold">Status: </div>
+      
       <div className="flex justify-center p-10">
         
         <div className="card bg-neutral text-neutral-content w-96 p-4 shadow-xl">
